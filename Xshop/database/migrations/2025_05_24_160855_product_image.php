@@ -13,9 +13,10 @@ class ProductImage extends Migration
      */
     public function up()
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('images', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('product id');
+            $table->foreignId('product_id');
+            $table->boolean('main');
             $table->string('image_url');
             $table->timestamps();
         });
