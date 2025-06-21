@@ -39,4 +39,12 @@ class ProductController extends Controller
     }
 
 
+    public function showProduct($id){
+        $product = Product::with(['images'=> function ($query) {
+            $query->where('main', true);
+        }])->findOrFail($id);
+        return response()->json($product, 200);
+    }
+
+
 }
