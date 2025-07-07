@@ -12,7 +12,7 @@ class Product extends Authenticatable
     use HasFactory, Notifiable;
 
     protected $fillable = [
-        'title', 'price', 'description',
+        'title', 'price', 'description','quantity'
     ];
 
     public function images()

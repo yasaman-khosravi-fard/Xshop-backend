@@ -20,7 +20,8 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 Route::get('/products' , [ProductController::class , 'index']);
 Route::post('/add-product' , [ProductController::class , 'createProduct']);
-
+Route::put('/update-product/{id}', [ProductController::class, 'updateProduct']);
 Route::get('/show-product/{id}', [ProductController::class, 'showProduct']);
+Route::delete('/delete-product/{id}', [ProductController::class, 'deleteProduct']);
 
 
