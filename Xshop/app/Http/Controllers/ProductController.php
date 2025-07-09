@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Validator;
 class ProductController extends Controller
 {
     public function index()
@@ -12,55 +12,71 @@ class ProductController extends Controller
         $products = Product::with(['images' => function ($query) {
             $query->where('main', true);
         }])->get();
+
         return response()->json($products, 200);
     }
 
     public function createProduct(Request $request)
     {
-        $product = Product::create([
-            'title' => $request->title,
-            'price' => $request->price,
-            'description' => $request->description,
-            'quantity' => $request->quantity,
+        $validated = Validator::make($request->all(), [
+            'title' => 'required|string|max:255',
+            'price' => 'required|numeric|min:0',
+            'description' => 'nullable|string',
+            'quantity' => 'required|integer|min:0',
+            'images.*' => 'image|mimes:jpeg,png,jpg,webp|max:2048' // max 2MB per image
         ]);
-        $images = $request->images;
+
+        if ($validated->fails()) {
+            return response()->json($validated->messages(), 422);
+        }
+
+        $product = Product::create([
+            'title' => $validated['title'],
+            'price' => $validated['price'],
+            'description' => $validated['description'] ?? null,
+            'quantity' => $validated['quantity'],
+        ]);
+
+        $images = $request->file('images');
+
         if ($images) {
             foreach ($images as $image) {
                 $path = "/storage/" . $image->store('products', 'public');
                 $product->images()->create([
                     'product_id' => $product->id,
                     'image_url' => $path,
-                    'main' => true,
+                    'main' => true, // You can extend this later to choose main
                 ]);
             }
-
         }
-        return response()->json(['code'=>200 ,'product'=>$product], 200);
 
+        return response()->json(['code' => 200, 'product' => $product], 200);
     }
 
-
-    public function showProduct($id){
-        $product = Product::with(['images'=> function ($query) {
+    public function showProduct($id)
+    {
+        $product = Product::with(['images' => function ($query) {
             $query->where('main', true);
         }])->findOrFail($id);
+
         return response()->json($product, 200);
     }
 
     public function updateProduct(Request $request, $id)
     {
-        // Validate the request
-        $validated = $request->validate([
+        $validated = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'price' => 'required|numeric|min:0',
-            'description' => 'nullable|string',
+            'description' => 'required|string',
             'quantity' => 'required|integer|min:0',
         ]);
 
-        // Find the product
+        if ($validated->fails()) {
+            return response()->json($validated->messages(), 422);
+        }
+
         $product = Product::findOrFail($id);
 
-        // Update the product fields
         $product->update([
             'title' => $validated['title'],
             'price' => $validated['price'],
@@ -74,7 +90,6 @@ class ProductController extends Controller
             'product' => $product,
         ], 200);
     }
-
 
     public function deleteProduct($id)
     {
@@ -90,6 +105,4 @@ class ProductController extends Controller
 
         return response()->json(['message' => 'Product deleted successfully.'], 200);
     }
-
-
 }
