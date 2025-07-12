@@ -23,5 +23,7 @@ Route::post('/add-product' , [ProductController::class , 'createProduct']);
 Route::put('/update-product/{id}', [ProductController::class, 'updateProduct']);
 Route::get('/show-product/{id}', [ProductController::class, 'showProduct']);
 Route::delete('/delete-product/{id}', [ProductController::class, 'deleteProduct']);
+Route::get('/get-types', [ProductController::class, 'getTypes']);
+Route::get('/get-products-categorized/{type}' , [ProductController::class , 'getProductsCategorized']);
 
 

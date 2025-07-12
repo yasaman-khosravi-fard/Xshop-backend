@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\ProductType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 class ProductController extends Controller
@@ -16,6 +17,18 @@ class ProductController extends Controller
         return response()->json($products, 200);
     }
 
+    public function getProductsCategorized($type)
+    {
+        $products = Product::with(['images' => function ($query) {
+            $query->where('main', true);
+        }])
+            ->where('type', $type) // Filter by type
+            ->get();
+
+        return response()->json($products, 200);
+    }
+
+
     public function createProduct(Request $request)
     {
         $validated = Validator::make($request->all(), [
@@ -23,18 +36,22 @@ class ProductController extends Controller
             'price' => 'required|numeric|min:0',
             'description' => 'nullable|string',
             'quantity' => 'required|integer|min:0',
-            'images.*' => 'image|mimes:jpeg,png,jpg,webp|max:2048' // max 2MB per image
+            'images.*' => 'image|mimes:jpeg,png,jpg,webp' ,
+            'type' => 'required|string',
+
         ]);
 
         if ($validated->fails()) {
             return response()->json($validated->messages(), 422);
         }
+        $validated = $validated->validated();
 
         $product = Product::create([
             'title' => $validated['title'],
             'price' => $validated['price'],
             'description' => $validated['description'] ?? null,
             'quantity' => $validated['quantity'],
+            'type' => $validated['type']
         ]);
 
         $images = $request->file('images');
@@ -69,6 +86,8 @@ class ProductController extends Controller
             'price' => 'required|numeric|min:0',
             'description' => 'required|string',
             'quantity' => 'required|integer|min:0',
+            'type' => 'required',
+
         ]);
 
         if ($validated->fails()) {
@@ -77,11 +96,14 @@ class ProductController extends Controller
 
         $product = Product::findOrFail($id);
 
+        $validated = $validated->validated();
+
         $product->update([
             'title' => $validated['title'],
             'price' => $validated['price'],
             'description' => $validated['description'],
             'quantity' => $validated['quantity'],
+            'type' => $validated['type']
         ]);
 
         return response()->json([
@@ -104,5 +126,12 @@ class ProductController extends Controller
         $product->delete();
 
         return response()->json(['message' => 'Product deleted successfully.'], 200);
+    }
+
+    public function getTypes()
+    {
+        $types = ProductType::all();
+
+        return response()->json(['types' => $types]);
     }
 }
